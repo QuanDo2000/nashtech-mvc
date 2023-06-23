@@ -145,9 +145,21 @@ namespace MyWebApp.Controllers
       {
         return Problem("Entity set 'PersonContext.Person'  is null.");
       }
+      var person = await _context.GetById(id);
+      if (person == null)
+      {
+        return NotFound();
+      }
+
       await _context.Delete(id);
 
-      return RedirectToAction(nameof(Index));
+      return RedirectToAction(nameof(DeleteConfirmed), new { name = person.FullName });
+    }
+
+    public IActionResult DeleteConfirmed(string name)
+    {
+      ViewData["name"] = name;
+      return View();
     }
 
     private bool PersonExists(int id)
