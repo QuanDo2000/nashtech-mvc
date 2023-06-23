@@ -9,14 +9,16 @@ using Microsoft.EntityFrameworkCore;
 
 using MyWebApp.Data;
 using MyWebApp.Models;
+using MyWebApp.Interfaces;
 
 namespace MyWebApp.Controllers
 {
   public class PersonController : Controller
   {
-    private readonly PersonContext _context;
+    // private readonly PersonContext _context;
+    private readonly IDbOperations<Person> _context;
 
-    public PersonController(PersonContext context)
+    public PersonController(IDbOperations<Person> context)
     {
       _context = context;
     }
@@ -24,21 +26,20 @@ namespace MyWebApp.Controllers
     // GET: Person
     public async Task<IActionResult> Index()
     {
-      return _context.Person != null ?
-                  View(await _context.Person.ToListAsync()) :
-                  Problem("Entity set 'PersonContext.Person'  is null.");
+      return _context.CheckNull() ?
+                    Problem("Entity set 'PersonContext.Person'  is null.") :
+                    View(await _context.List());
     }
 
     // GET: Person/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-      if (id == null || _context.Person == null)
+      if (id == null || _context.CheckNull())
       {
         return NotFound();
       }
 
-      var person = await _context.Person
-          .FirstOrDefaultAsync(m => m.Id == id);
+      var person = await _context.GetById(id.Value);
       if (person == null)
       {
         return NotFound();
@@ -62,8 +63,7 @@ namespace MyWebApp.Controllers
     {
       if (ModelState.IsValid)
       {
-        _context.Add(person);
-        await _context.SaveChangesAsync();
+        await _context.Create(person);
         return RedirectToAction(nameof(Index));
       }
       return View(person);
@@ -72,12 +72,12 @@ namespace MyWebApp.Controllers
     // GET: Person/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
-      if (id == null || _context.Person == null)
+      if (id == null || _context.CheckNull())
       {
         return NotFound();
       }
 
-      var person = await _context.Person.FindAsync(id);
+      var person = await _context.GetById(id.Value);
       if (person == null)
       {
         return NotFound();
@@ -101,8 +101,7 @@ namespace MyWebApp.Controllers
       {
         try
         {
-          _context.Update(person);
-          await _context.SaveChangesAsync();
+          await _context.Update(person);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -123,13 +122,12 @@ namespace MyWebApp.Controllers
     // GET: Person/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
-      if (id == null || _context.Person == null)
+      if (id == null || _context.CheckNull())
       {
         return NotFound();
       }
 
-      var person = await _context.Person
-          .FirstOrDefaultAsync(m => m.Id == id);
+      var person = await _context.GetById(id.Value);
       if (person == null)
       {
         return NotFound();
@@ -143,23 +141,20 @@ namespace MyWebApp.Controllers
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-      if (_context.Person == null)
+      if (_context.CheckNull())
       {
         return Problem("Entity set 'PersonContext.Person'  is null.");
       }
-      var person = await _context.Person.FindAsync(id);
-      if (person != null)
-      {
-        _context.Person.Remove(person);
-      }
+      await _context.Delete(id);
 
-      await _context.SaveChangesAsync();
       return RedirectToAction(nameof(Index));
     }
 
     private bool PersonExists(int id)
     {
-      return (_context.Person?.Any(e => e.Id == id)).GetValueOrDefault();
+      return _context.CheckNull() ?
+                    throw new Exception("Entity set 'PersonContext.Person'  is null.") :
+                    _context.GetById(id) != null;
     }
   }
 }

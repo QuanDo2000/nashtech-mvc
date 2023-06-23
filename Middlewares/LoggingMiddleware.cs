@@ -1,4 +1,5 @@
 using System.Globalization;
+
 using MyWebApp.Interfaces;
 
 namespace MyWebApp.Middleware;
@@ -14,6 +15,7 @@ public class LoggingMiddleware
 
   public async Task InvokeAsync(HttpContext context, IFileWriter fileWriter)
   {
+    await _next(context);
     string currentDate = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     string logPath = $"./Logs/{currentDate}.txt";
     string content = $"""
@@ -26,7 +28,6 @@ public class LoggingMiddleware
 
     """;
     await fileWriter.WriteToFileAsync(logPath, content);
-    await _next(context);
   }
 }
 

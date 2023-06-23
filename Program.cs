@@ -1,7 +1,8 @@
-using MyWebApp.Middleware;
-using MyWebApp.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
+using MyWebApp.Middleware;
+using MyWebApp.Interfaces;
 using MyWebApp.Data;
 using MyWebApp.Models;
 
@@ -21,6 +22,7 @@ else
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IFileWriter, LoggingFileWriter>();
+builder.Services.AddScoped<IDbOperations<Person>, PersonOperations>();
 
 var app = builder.Build();
 
@@ -45,8 +47,6 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.UseLoggingMiddleware();
-
 // app.MapControllerRoute(
 //     name: "default",
 //     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -54,5 +54,7 @@ app.UseLoggingMiddleware();
 app.MapControllerRoute(
     name: "rookie",
     pattern: "/NashTech/{controller=Rookie}/{action=Index}/{id?}");
+
+app.UseLoggingMiddleware();
 
 app.Run();
