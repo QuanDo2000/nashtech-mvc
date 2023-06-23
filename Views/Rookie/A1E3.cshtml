@@ -1,0 +1,23 @@
+@model IEnumerable<string>
+
+@{
+  ViewData["Title"] = "Assignment 1 - Exercise 3";
+}
+
+<h1>Assignment 1 - Exercise 3</h1>
+<br />
+<div>
+  <h4>Full Name List</h4>
+  <hr />
+  <ul>
+    @foreach (var item in Model)
+    {
+      <li>
+        @item
+      </li>
+    }
+  </ul>
+</div>
+<div>
+  <a asp-action="Index">Back to Rookie</a>
+</div>
