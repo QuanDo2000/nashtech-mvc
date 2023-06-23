@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using OfficeOpenXml;
 using MyWebApp.Models;
 using MyWebApp.Data;
 
@@ -63,5 +64,20 @@ public class RookieController : Controller
       default:
         return View(year2000);
     }
+  }
+
+  public IActionResult A1E5()
+  {
+    var persons = from p in _context.Person select p;
+    var stream = new MemoryStream();
+    using (var package = new ExcelPackage(stream))
+    {
+      var worksheet = package.Workbook.Worksheets.Add("Person");
+      worksheet.Cells.LoadFromCollection(persons, true);
+      package.Save();
+    }
+    stream.Position = 0;
+    string excelName = $"Person-{DateTime.Now.ToString("yyyyMMddHHmmssfff")}.xlsx";
+    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
   }
 }
