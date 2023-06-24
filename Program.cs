@@ -18,11 +18,16 @@ else
   builder.Services.AddDbContext<PersonContext>(options =>
       options.UseSqlServer(builder.Configuration.GetConnectionString("PersonContext") ?? throw new InvalidOperationException("Connection string 'PersonContext' not found.")));
 }
+builder.Services.AddDbContext<TaskContext>(options =>
+  options.UseInMemoryDatabase("TaskList"));
+
+builder.Services.AddScoped<IFileWriter, LoggingFileWriter>();
+builder.Services.AddScoped<IDbOperations<Person>, PersonOperations>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<IFileWriter, LoggingFileWriter>();
-builder.Services.AddScoped<IDbOperations<Person>, PersonOperations>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -38,6 +43,11 @@ if (!app.Environment.IsDevelopment())
   app.UseExceptionHandler("/Home/Error");
   // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
   app.UseHsts();
+}
+else
+{
+  app.UseSwagger();
+  app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
