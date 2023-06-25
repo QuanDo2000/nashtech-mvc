@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 using MyWebApp.Data;
 using MyWebApp.Models;
-using MyWebApp.Interfaces;
+using MyWebApp.Services;
 
 namespace MyWebApp.Controllers
 {

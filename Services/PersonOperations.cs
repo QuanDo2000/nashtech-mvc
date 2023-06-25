@@ -3,21 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using MyWebApp.Data;
 using MyWebApp.Models;
 
-namespace MyWebApp.Interfaces;
-
-public interface IDbOperations<T>
-{
-  bool CheckNull();
-  Task Create(T entity);
-  Task Update(T entity);
-  Task Delete(int id);
-  Task<List<T>> List();
-  Task<T?> GetById(int id);
-}
+namespace MyWebApp.Services;
 
 public class PersonOperations : IDbOperations<Person>
 {
   private readonly PersonContext _context;
+
+  public class FilterNames
+  {
+    public const string Name = "name";
+    public const string Gender = "gender";
+    public const string BirthPlace = "birth_place";
+  }
 
   public PersonOperations(PersonContext context)
   {
@@ -59,5 +56,23 @@ public class PersonOperations : IDbOperations<Person>
   public async Task<Person?> GetById(int id)
   {
     return await _context.Person.FirstOrDefaultAsync(m => m.Id == id);
+  }
+
+  public async Task<List<Person>> GetByFilters(Dictionary<string, string> filters)
+  {
+    var query = _context.Person.AsQueryable();
+    if (filters.ContainsKey(FilterNames.Name))
+    {
+      query = query.Where(p => (p.FirstName != null && EF.Functions.Like(p.FirstName, $"%{filters[FilterNames.Name]}%")) || (p.LastName != null && EF.Functions.Like(p.LastName, $"%{filters[FilterNames.Name]}%")));
+    }
+    if (filters.ContainsKey(FilterNames.Gender))
+    {
+      query = query.Where(p => p.Gender == filters[FilterNames.Gender]);
+    }
+    if (filters.ContainsKey(FilterNames.BirthPlace))
+    {
+      query = query.Where(p => p.BirthPlace == filters[FilterNames.BirthPlace]);
+    }
+    return await query.ToListAsync();
   }
 }

@@ -1,9 +1,4 @@
-namespace MyWebApp.Interfaces;
-
-public interface IFileWriter
-{
-  Task WriteToFileAsync(string filePath, string content);
-}
+namespace MyWebApp.Services;
 
 public class LoggingFileWriter : IFileWriter
 {

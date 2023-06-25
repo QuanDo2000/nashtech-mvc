@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using MyWebApp.Data;
+using MyWebApp.Services;
 using MyWebApp.Models;
 
 namespace MyWebApp.Controllers
@@ -16,9 +17,10 @@ namespace MyWebApp.Controllers
   [ApiController]
   public class PersonAPIController : ControllerBase
   {
-    private readonly PersonContext _context;
+    // private readonly PersonContext _context;
+    private readonly IDbOperations<Person> _context;
 
-    public PersonAPIController(PersonContext context)
+    public PersonAPIController(IDbOperations<Person> context)
     {
       _context = context;
     }
@@ -28,39 +30,35 @@ namespace MyWebApp.Controllers
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Person>>> GetPerson([FromQuery(Name = "name")] string? name, [FromQuery(Name = "gender")] string? gender, [FromQuery(Name = "birth_place")] string? birthPlace)
     {
-      if (_context.Person == null)
+      if (_context.CheckNull())
       {
         return NotFound();
       }
-      if (name == null && gender == null && birthPlace == null)
-      {
-        return await _context.Person.ToListAsync();
-      }
-      var query = _context.Person.AsQueryable();
+      var filters = new Dictionary<string, string>();
       if (name != null)
       {
-        query = query.Where(p => (p.FirstName != null && EF.Functions.Like(p.FirstName, $"%{name}%")) || (p.LastName != null && EF.Functions.Like(p.LastName, $"%{name}%")));
+        filters.Add(PersonOperations.FilterNames.Name, name);
       }
       if (gender != null)
       {
-        query = query.Where(p => p.Gender == gender);
+        filters.Add(PersonOperations.FilterNames.Gender, gender);
       }
       if (birthPlace != null)
       {
-        query = query.Where(p => p.BirthPlace == birthPlace);
+        filters.Add(PersonOperations.FilterNames.BirthPlace, birthPlace);
       }
-      return await query.ToListAsync();
+      return await _context.GetByFilters(filters);
     }
 
     // GET: api/PersonAPI/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Person>> GetPerson(int id)
     {
-      if (_context.Person == null)
+      if (_context.CheckNull())
       {
         return NotFound();
       }
-      var person = await _context.Person.FindAsync(id);
+      var person = await _context.GetById(id);
 
       if (person == null)
       {
@@ -80,11 +78,9 @@ namespace MyWebApp.Controllers
         return BadRequest();
       }
 
-      _context.Entry(person).State = EntityState.Modified;
-
       try
       {
-        await _context.SaveChangesAsync();
+        await _context.Update(person);
       }
       catch (DbUpdateConcurrencyException)
       {
@@ -106,12 +102,11 @@ namespace MyWebApp.Controllers
     [HttpPost]
     public async Task<ActionResult<Person>> PostPerson(Person person)
     {
-      if (_context.Person == null)
+      if (_context.CheckNull())
       {
         return Problem("Entity set 'PersonContext.Person'  is null.");
       }
-      _context.Person.Add(person);
-      await _context.SaveChangesAsync();
+      await _context.Create(person);
 
       return CreatedAtAction("GetPerson", new { id = person.Id }, person);
     }
@@ -120,25 +115,23 @@ namespace MyWebApp.Controllers
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePerson(int id)
     {
-      if (_context.Person == null)
+      if (_context.CheckNull())
       {
         return NotFound();
       }
-      var person = await _context.Person.FindAsync(id);
+      var person = await _context.GetById(id);
       if (person == null)
       {
         return NotFound();
       }
 
-      _context.Person.Remove(person);
-      await _context.SaveChangesAsync();
-
+      await _context.Delete(id);
       return NoContent();
     }
 
     private bool PersonExists(int id)
     {
-      return (_context.Person?.Any(e => e.Id == id)).GetValueOrDefault();
+      return _context.GetById(id) != null;
     }
   }
 }

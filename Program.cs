@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using MyWebApp.Middleware;
-using MyWebApp.Interfaces;
+using MyWebApp.Services;
 using MyWebApp.Data;
 using MyWebApp.Models;
 
