@@ -7,6 +7,8 @@ using MyWebApp.Data;
 using MyWebApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<StudentContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("StudentContext") ?? throw new InvalidOperationException("Connection string 'StudentContext' not found.")));
 
 if (builder.Environment.IsDevelopment())
 {
