@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
+using System.Text.Json.Serialization;
+
 using MyWebApp.Middleware;
 using MyWebApp.Services;
 using MyWebApp.Data;
@@ -9,6 +11,8 @@ using MyWebApp.Models;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<StudentContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("StudentContext") ?? throw new InvalidOperationException("Connection string 'StudentContext' not found.")));
+builder.Services.AddDbContext<StoreContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("StoreContext") ?? throw new InvalidOperationException("Connection string 'StoreContext' not found.")));
 
 if (builder.Environment.IsDevelopment())
 {
@@ -27,7 +31,12 @@ builder.Services.AddScoped<IFileWriter, LoggingFileWriter>();
 builder.Services.AddScoped<IDbOperations<Person>, PersonOperations>();
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews().AddJsonOptions(
+  options =>
+  {
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+  }
+);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
